@@ -1,21 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../services/api_service.dart';
+import '../services/grocery_api_service.dart';
 
-class CategoryEditScreen extends StatefulWidget {
+class GroceryCategoryEditScreen extends StatefulWidget {
   final Map<String, dynamic> category;
   
-  const CategoryEditScreen({
+  const GroceryCategoryEditScreen({
     super.key,
     required this.category,
   });
 
   @override
-  State<CategoryEditScreen> createState() => _CategoryEditScreenState();
+  State<GroceryCategoryEditScreen> createState() => _GroceryCategoryEditScreenState();
 }
 
-class _CategoryEditScreenState extends State<CategoryEditScreen> {
+class _GroceryCategoryEditScreenState extends State<GroceryCategoryEditScreen> {
   final TextEditingController _categoryNameController = TextEditingController();
   bool _isUpdating = false;
   File? _selectedImage;
@@ -24,7 +24,6 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill the form with existing category data
     _categoryNameController.text = widget.category['name'] ?? '';
   }
 
@@ -65,7 +64,6 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
   }
 
   Future<void> _updateCategory() async {
-    // Validate category name
     if (_categoryNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -81,22 +79,20 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
     });
 
     try {
-      await ApiService.updateFoodCategory(
+      await GroceryApiService.updateGroceryCategory(
         id: widget.category['id'],
         name: _categoryNameController.text.trim(),
         imageFile: _selectedImage,
-        module: widget.category['module'],
       );
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Category updated successfully!'),
+          content: Text('Grocery category updated successfully!'),
           backgroundColor: Colors.green,
         ),
       );
       
-      // Go back to previous screen
-      Navigator.pop(context, true); // Return true to indicate successful update
+      Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -115,8 +111,8 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Update Category'),
-        backgroundColor: const Color(0xFF2D7D7D),
+        title: const Text('Update Grocery Category'),
+        backgroundColor: Colors.teal[600],
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -127,15 +123,15 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
             // Header
             Row(
               children: [
-                const Icon(
-                  Icons.edit,
+                Icon(
+                  Icons.shopping_cart,
                   size: 24,
-                  color: Color(0xFF2D7D7D),
+                  color: Colors.teal[600],
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  'Update Food Category',
-                  style: const TextStyle(
+                const Text(
+                  'Update Grocery Category',
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
@@ -170,7 +166,7 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
                         TextField(
                           controller: _categoryNameController,
                           decoration: const InputDecoration(
-                            hintText: 'Enter category name',
+                            hintText: 'Enter grocery category name',
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
@@ -204,7 +200,7 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
                             ElevatedButton(
                               onPressed: _isUpdating ? null : _updateCategory,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2D7D7D),
+                                backgroundColor: Colors.teal[600],
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 24,
                                   vertical: 12,
@@ -254,14 +250,14 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange[100],
+                                color: Colors.teal[100],
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 'Ratio 1:1',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.orange[800],
+                                  color: Colors.teal[800],
                                 ),
                               ),
                             ),
@@ -341,7 +337,7 @@ class _CategoryEditScreenState extends State<CategoryEditScreen> {
                                           ClipRRect(
                                             borderRadius: BorderRadius.circular(6),
                                             child: Image.network(
-                                              'http://localhost/instachow_admin_panel_backend/${widget.category['icon_url']}',
+                                              'http://localhost:8080/instachow_admin_panel_backend/${widget.category['icon_url']}',
                                               width: double.infinity,
                                               height: double.infinity,
                                               fit: BoxFit.cover,

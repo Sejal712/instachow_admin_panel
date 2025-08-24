@@ -116,6 +116,7 @@ class ApiService {
     required int id,
     required String name,
     File? imageFile,
+    String? module,
   }) async {
     try {
       ApiConfig.debugLog('Starting updateFoodCategory request');
@@ -128,6 +129,9 @@ class ApiService {
         request.fields['_method'] = 'PUT';
         request.fields['id'] = id.toString();
         request.fields['name'] = name;
+        if (module != null && module.isNotEmpty) {
+          request.fields['module'] = module;
+        }
 
         ApiConfig.debugLog('Multipart fields: ${request.fields}');
 
@@ -143,6 +147,9 @@ class ApiService {
           'id': id,
           'name': name,
         };
+        if (module != null && module.isNotEmpty) {
+          requestBody['module'] = module;
+        }
         ApiConfig.debugLog('Request body: $requestBody');
 
         response = await http.put(
