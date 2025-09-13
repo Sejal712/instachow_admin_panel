@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import '../services/food_api_service.dart';
 import '../config/api_config.dart';
 
-class SubCategoriesScreen extends StatefulWidget {
-  final String selectedModule;
-  
-  const SubCategoriesScreen({
-    super.key,
-    required this.selectedModule,
-  });
+class FoodSubCategoriesScreen extends StatefulWidget {
+  const FoodSubCategoriesScreen({super.key});
 
   @override
-  State<SubCategoriesScreen> createState() => _SubCategoriesScreenState();
+  State<FoodSubCategoriesScreen> createState() => _FoodSubCategoriesScreenState();
 }
 
-class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
+class _FoodSubCategoriesScreenState extends State<FoodSubCategoriesScreen> {
   int _selectedLanguageIndex = 0;
   final TextEditingController _subCategoryNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -33,17 +28,6 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
   }
 
   @override
-  void didUpdateWidget(SubCategoriesScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Reload master categories if the module has changed
-    if (oldWidget.selectedModule != widget.selectedModule) {
-      _selectedMasterCategoryId = null; // Clear selection when module changes
-      _loadMasterCategories();
-      _loadSubCategories();
-    }
-  }
-
-  @override
   void dispose() {
     _subCategoryNameController.dispose();
     _descriptionController.dispose();
@@ -52,61 +36,40 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
 
   Future<void> _loadMasterCategories() async {
     try {
-      final categories = await ApiService.getMasterCategoriesByModule(module: widget.selectedModule);
+      final categories = await FoodApiService.getFoodCategories();
       setState(() {
         _masterCategories = categories;
       });
     } catch (e) {
-      ApiConfig.debugLog('Error loading master categories: $e');
+      ApiConfig.debugLog('Error loading food master categories: $e');
     }
   }
 
   Future<void> _loadSubCategories() async {
     setState(() {
       _isLoading = true;
-      _subCategories = []; // Clear existing data first
+      _subCategories = [];
     });
 
     try {
-      ApiConfig.debugLog('Loading sub-categories for module: ${widget.selectedModule}');
+      ApiConfig.debugLog('Loading food sub-categories');
       
-      // Get all sub-categories first
-      final allSubCategories = await ApiService.getSubCategories();
-      ApiConfig.debugLog('Retrieved ${allSubCategories.length} total sub-categories');
-      
-      // Get master categories for the current module
-      final masterCategories = await ApiService.getFoodCategories(module: widget.selectedModule);
-      ApiConfig.debugLog('Retrieved ${masterCategories.length} master categories for ${widget.selectedModule}');
-      
-      // Create a set of master category IDs for the current module for faster lookup
-      final currentModuleMasterCatIds = masterCategories
-          .map((masterCat) => masterCat['id'].toString())
-          .toSet();
-      
-      ApiConfig.debugLog('Master category IDs for ${widget.selectedModule}: $currentModuleMasterCatIds');
-      
-      // Filter sub-categories to only show those belonging to master categories of the current module
-      final filteredSubCategories = allSubCategories.where((subCategory) {
-        String masterCatId = subCategory['master_cat_food_id'].toString();
-        bool belongs = currentModuleMasterCatIds.contains(masterCatId);
-        if (belongs) {
-          ApiConfig.debugLog('Sub-category "${subCategory['name']}" belongs to ${widget.selectedModule} (master cat ID: $masterCatId)');
-        }
-        return belongs;
-      }).toList();
+      // Get all food sub-categories
+      final allSubCategories = await FoodApiService.getFoodSubCategories();
+      ApiConfig.debugLog('Retrieved ${allSubCategories.length} food sub-categories');
       
       setState(() {
-        _subCategories = filteredSubCategories;
+        _subCategories = allSubCategories;
         _isLoading = false;
       });
       
-      ApiConfig.debugLog('Successfully filtered to ${filteredSubCategories.length} sub-categories for ${widget.selectedModule}');
+      ApiConfig.debugLog('Successfully loaded ${allSubCategories.length} food sub-categories');
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _subCategories = []; // Ensure empty list on error
+        _subCategories = [];
       });
-      ApiConfig.debugLog('Error loading sub-categories: $e');
+      ApiConfig.debugLog('Error loading food sub-categories: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -134,7 +97,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
     });
 
     try {
-      await ApiService.addSubCategory(
+      await FoodApiService.addFoodSubCategory(
         name: _subCategoryNameController.text.trim(),
         description: _descriptionController.text.trim(),
         masterCatId: _selectedMasterCategoryId!,
@@ -149,7 +112,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sub-category added successfully!'),
+            content: Text('Food sub-category added successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -188,7 +151,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
     });
 
     try {
-      await ApiService.updateSubCategory(
+      await FoodApiService.updateFoodSubCategory(
         id: _editingSubCategoryId!,
         name: _subCategoryNameController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -205,7 +168,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sub-category updated successfully!'),
+            content: Text('Food sub-category updated successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -248,13 +211,13 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
 
     if (confirmed == true) {
       try {
-        await ApiService.deleteSubCategory(id);
+        await FoodApiService.deleteFoodSubCategory(id);
         await _loadSubCategories();
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Sub-category deleted successfully!'),
+              content: Text('Food sub-category deleted successfully!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -277,65 +240,8 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
       _editingSubCategoryId = subCategory['id'].toString();
       _subCategoryNameController.text = subCategory['name'] ?? '';
       _descriptionController.text = subCategory['description'] ?? '';
-      _selectedMasterCategoryId = null; // Reset first
+      _selectedMasterCategoryId = subCategory['master_cat_food_id'].toString();
     });
-
-    try {
-      // Load ONLY master categories for the current module (not all categories)
-      ApiConfig.debugLog('Loading master categories for current module: ${widget.selectedModule}');
-      
-      final masterCategories = await ApiService.getFoodCategories(module: widget.selectedModule);
-      
-      // Remove duplicates and null values
-      final uniqueMasterCategories = <String, Map<String, dynamic>>{};
-      for (var category in masterCategories) {
-        if (category['id'] != null && category['name'] != null) {
-          String id = category['id'].toString();
-          uniqueMasterCategories[id] = category;
-        }
-      }
-      
-      setState(() {
-        _masterCategories = uniqueMasterCategories.values.toList();
-      });
-
-      // Set the selected master category
-      String masterCatId = subCategory['master_cat_food_id'].toString();
-      
-      // Check if the master category exists in current module
-      bool categoryExists = _masterCategories.any((cat) => cat['id'].toString() == masterCatId);
-      
-      setState(() {
-        if (categoryExists) {
-          _selectedMasterCategoryId = masterCatId;
-          ApiConfig.debugLog('Edit mode: Set selected master category to $masterCatId');
-        } else {
-          _selectedMasterCategoryId = null;
-          ApiConfig.debugLog('Edit mode: Master category $masterCatId not found in ${widget.selectedModule} module');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Warning: This sub-category belongs to a different module. Please select a ${widget.selectedModule} master category.'),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 4),
-              ),
-            );
-          }
-        }
-      });
-      
-      ApiConfig.debugLog('Edit mode: Loaded ${_masterCategories.length} master categories for ${widget.selectedModule}');
-    } catch (e) {
-      ApiConfig.debugLog('Error loading master categories for edit: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading categories: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   void _cancelEdit() {
@@ -345,9 +251,6 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
       _descriptionController.clear();
       _selectedMasterCategoryId = null;
     });
-    
-    // Reload master categories for the current module
-    _loadMasterCategories();
   }
 
   List<DropdownMenuItem<String>> _buildDropdownItems() {
@@ -360,7 +263,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
           value: id,
           child: Text(name),
         );
-      }).toSet().toList(); // Remove duplicates by converting to Set then back to List
+      }).toList();
   }
 
   @override
@@ -375,24 +278,43 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.category_outlined,
+                  Icons.restaurant,
                   size: 32,
-                  color: Colors.teal[600],
+                  color: Colors.orange[600],
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Sub Categories Management',
+                  'Food Sub Categories Management',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.grey[800],
                   ),
                 ),
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Food Module',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.orange[700],
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              'Manage sub-categories for ${widget.selectedModule}',
+              'Manage sub-categories for Food module',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -422,11 +344,11 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                     children: [
                       Icon(
                         _editingSubCategoryId != null ? Icons.edit : Icons.add,
-                        color: Colors.teal[600],
+                        color: Colors.orange[600],
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _editingSubCategoryId != null ? 'Edit Sub Category' : 'Add New Sub Category',
+                        _editingSubCategoryId != null ? 'Edit Food Sub Category' : 'Add New Food Sub Category',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
@@ -482,14 +404,14 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                             TextField(
                               controller: _subCategoryNameController,
                               decoration: InputDecoration(
-                                hintText: 'New sub category',
+                                hintText: 'New food sub category',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   borderSide: BorderSide(color: Colors.grey[300]!),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Colors.teal[600]!),
+                                  borderSide: BorderSide(color: Colors.orange[600]!),
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -528,7 +450,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                             DropdownButtonFormField<String>(
                               value: _selectedMasterCategoryId,
                               decoration: InputDecoration(
-                                hintText: 'Select Main Category',
+                                hintText: 'Select Food Category',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -581,7 +503,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.teal[600]!),
+                            borderSide: BorderSide(color: Colors.orange[600]!),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -612,7 +534,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                           ? null 
                           : (_editingSubCategoryId != null ? _updateSubCategory : _addSubCategory),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal[600],
+                          backgroundColor: Colors.orange[600],
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 32,
@@ -642,7 +564,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
 
             // Sub Categories List
             Container(
-              height: 400, // Fixed height instead of Expanded
+              height: 400,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -675,11 +597,11 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.teal[600],
+                            color: Colors.orange[600],
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            'Sub Category List',
+                            'Food Sub Category List',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -694,13 +616,13 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.teal[100],
+                            color: Colors.orange[100],
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             '${_subCategories.length}',
                             style: TextStyle(
-                              color: Colors.teal[700],
+                              color: Colors.orange[700],
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -714,7 +636,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                     child: _isLoading
                         ? const Center(
                             child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                             ),
                           )
                         : _subCategories.isEmpty
@@ -723,13 +645,13 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      Icons.category_outlined,
+                                      Icons.restaurant_outlined,
                                       size: 64,
                                       color: Colors.grey[400],
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
-                                      'No sub-categories found for ${widget.selectedModule}',
+                                      'No food sub-categories found',
                                       style: TextStyle(
                                         fontSize: 16,
                                         color: Colors.grey[600],
@@ -737,7 +659,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Add your first sub-category above',
+                                      'Add your first food sub-category above',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey[500],
@@ -775,7 +697,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.teal[600] : Colors.grey[200],
+          color: isSelected ? Colors.orange[600] : Colors.grey[200],
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
@@ -807,7 +729,7 @@ class _SubCategoriesScreenState extends State<SubCategoriesScreen> {
               width: 40,
               alignment: Alignment.center,
               child: Text(
-                '$index',
+                '${index + 1}',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],

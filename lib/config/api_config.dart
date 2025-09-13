@@ -1,6 +1,6 @@
 class ApiConfig {
   static const String baseUrl =
-      'http://localhost:8080/instachow_admin_panel_backend';
+      'http://localhost/instachow_admin_panel_backend';
 
   // Food endpoints
   static const String foodCategoriesEndpoint = '/food_categories.php';

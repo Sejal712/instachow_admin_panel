@@ -1,5 +1,9 @@
 <?php
-require_once 'backend/db.php';
+// Suppress PHP errors to prevent HTML output
+error_reporting(0);
+ini_set('display_errors', 0);
+
+require_once 'db.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -26,7 +30,7 @@ switch($method) {
 
 function getFoodSubCategories($db) {
     try {
-        $query = "SELECT sc.id, sc.name, sc.description, sc.master_cat_food_id, 
+        $query = "SELECT sc.categories_id, sc.name, sc.description, sc.master_cat_food_id, 
                          mc.name as master_category_name, mc.module, sc.created_at
                   FROM sub_categories sc
                   INNER JOIN master_categories mc ON sc.master_cat_food_id = mc.maste_cat_food_id
@@ -39,7 +43,7 @@ function getFoodSubCategories($db) {
         $subCategories = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $subCategories[] = [
-                'id' => $row['id'],
+                'id' => $row['categories_id'],
                 'name' => $row['name'],
                 'description' => $row['description'],
                 'master_cat_food_id' => $row['master_cat_food_id'],
@@ -90,11 +94,11 @@ function addFoodSubCategory($db) {
         if ($stmt->execute()) {
             $sub_category_id = $db->lastInsertId();
             
-            $select_query = "SELECT sc.id, sc.name, sc.description, sc.master_cat_food_id, 
+            $select_query = "SELECT sc.categories_id, sc.name, sc.description, sc.master_cat_food_id, 
                                    mc.name as master_category_name, mc.module, sc.created_at
                             FROM sub_categories sc
                             INNER JOIN master_categories mc ON sc.master_cat_food_id = mc.maste_cat_food_id
-                            WHERE sc.id = :id";
+                            WHERE sc.categories_id = :id";
             $select_stmt = $db->prepare($select_query);
             $select_stmt->bindParam(':id', $sub_category_id);
             $select_stmt->execute();
@@ -136,7 +140,7 @@ function updateFoodSubCategory($db) {
             return;
         }
         
-        $query = "UPDATE sub_categories SET name = :name, description = :description, master_cat_food_id = :master_cat_food_id WHERE id = :id";
+        $query = "UPDATE sub_categories SET name = :name, description = :description, master_cat_food_id = :master_cat_food_id WHERE categories_id = :id";
         $stmt = $db->prepare($query);
         
         $stmt->bindParam(':id', $id);
@@ -145,11 +149,11 @@ function updateFoodSubCategory($db) {
         $stmt->bindParam(':master_cat_food_id', $master_cat_food_id);
         
         if ($stmt->execute()) {
-            $select_query = "SELECT sc.id, sc.name, sc.description, sc.master_cat_food_id, 
+            $select_query = "SELECT sc.categories_id, sc.name, sc.description, sc.master_cat_food_id, 
                                    mc.name as master_category_name, mc.module, sc.created_at
                             FROM sub_categories sc
                             INNER JOIN master_categories mc ON sc.master_cat_food_id = mc.maste_cat_food_id
-                            WHERE sc.id = :id";
+                            WHERE sc.categories_id = :id";
             $select_stmt = $db->prepare($select_query);
             $select_stmt->bindParam(':id', $id);
             $select_stmt->execute();
@@ -175,7 +179,7 @@ function deleteFoodSubCategory($db) {
     }
     
     try {
-        $query = "DELETE FROM sub_categories WHERE id = :id";
+        $query = "DELETE FROM sub_categories WHERE categories_id = :id";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':id', $data['id']);
         

@@ -1,5 +1,9 @@
 <?php
-require_once 'backend/db.php';
+// Suppress PHP errors to prevent HTML output
+error_reporting(0);
+ini_set('display_errors', 0);
+
+require_once 'db.php';
 
 $database = new Database();
 $db = $database->getConnection();

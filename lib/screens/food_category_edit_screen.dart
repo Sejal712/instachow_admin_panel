@@ -5,11 +5,8 @@ import '../services/food_api_service.dart';
 
 class FoodCategoryEditScreen extends StatefulWidget {
   final Map<String, dynamic> category;
-  
-  const FoodCategoryEditScreen({
-    super.key,
-    required this.category,
-  });
+
+  const FoodCategoryEditScreen({super.key, required this.category});
 
   @override
   State<FoodCategoryEditScreen> createState() => _FoodCategoryEditScreenState();
@@ -84,14 +81,14 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
         name: _categoryNameController.text.trim(),
         imageFile: _selectedImage,
       );
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Food category updated successfully!'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -123,11 +120,7 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
             // Header
             Row(
               children: [
-                Icon(
-                  Icons.restaurant,
-                  size: 24,
-                  color: Colors.orange[600],
-                ),
+                Icon(Icons.restaurant, size: 24, color: Colors.orange[600]),
                 const SizedBox(width: 12),
                 const Text(
                   'Update Food Category',
@@ -139,9 +132,9 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Form
             Expanded(
               child: Row(
@@ -175,13 +168,14 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        
+
                         // Action buttons
                         Row(
                           children: [
                             OutlinedButton(
                               onPressed: () {
-                                _categoryNameController.text = widget.category['name'] ?? '';
+                                _categoryNameController.text =
+                                    widget.category['name'] ?? '';
                                 _removeImage();
                               },
                               style: OutlinedButton.styleFrom(
@@ -226,7 +220,7 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
                     ),
                   ),
                   const SizedBox(width: 32),
-                  
+
                   // Right side - Image upload
                   Expanded(
                     flex: 1,
@@ -271,7 +265,9 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
                             width: double.infinity,
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: _selectedImage != null ? Colors.green : Colors.grey[300]!,
+                                color: _selectedImage != null
+                                    ? Colors.green
+                                    : Colors.grey[300]!,
                                 style: BorderStyle.solid,
                                 width: _selectedImage != null ? 2 : 1,
                               ),
@@ -298,7 +294,8 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
                                             padding: const EdgeInsets.all(4),
                                             decoration: BoxDecoration(
                                               color: Colors.red,
-                                              borderRadius: BorderRadius.circular(12),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: const Icon(
                                               Icons.close,
@@ -316,7 +313,9 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
                                             color: Colors.black54,
-                                            borderRadius: BorderRadius.circular(4),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
                                           ),
                                           child: Text(
                                             _selectedImageName ?? 'New Image',
@@ -331,45 +330,49 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
                                       ),
                                     ],
                                   )
-                                : widget.category['icon_url'] != null && widget.category['icon_url'].isNotEmpty
-                                    ? Stack(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(6),
-                                            child: Image.network(
-                                              'http://localhost:8080/instachow_admin_panel_backend/${widget.category['icon_url']}',
-                                              width: double.infinity,
-                                              height: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) {
+                                : widget.category['icon_url'] != null &&
+                                      widget.category['icon_url'].isNotEmpty
+                                ? Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: Image.network(
+                                          'http://localhost/instachow_admin_panel_backend/${widget.category['icon_url']}',
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
                                                 return _buildUploadPlaceholder();
                                               },
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 8,
+                                        left: 8,
+                                        right: 8,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black54,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
                                             ),
                                           ),
-                                          Positioned(
-                                            bottom: 8,
-                                            left: 8,
-                                            right: 8,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: Colors.black54,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: const Text(
-                                                'Current Image (Click to change)',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 12,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                          child: const Text(
+                                            'Current Image (Click to change)',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ],
-                                      )
-                                    : _buildUploadPlaceholder(),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : _buildUploadPlaceholder(),
                           ),
                         ),
                       ],
@@ -388,11 +391,7 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.cloud_upload_outlined,
-          size: 48,
-          color: Colors.grey[400],
-        ),
+        Icon(Icons.cloud_upload_outlined, size: 48, color: Colors.grey[400]),
         const SizedBox(height: 12),
         Text(
           'Upload New Image',
@@ -405,17 +404,11 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
         const SizedBox(height: 4),
         Text(
           'Optional',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[500],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
         ),
         const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey[300]!),
             borderRadius: BorderRadius.circular(4),
@@ -423,18 +416,11 @@ class _FoodCategoryEditScreenState extends State<FoodCategoryEditScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.edit,
-                size: 16,
-                color: Colors.grey[600],
-              ),
+              Icon(Icons.edit, size: 16, color: Colors.grey[600]),
               const SizedBox(width: 4),
               Text(
                 'Choose File',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
           ),

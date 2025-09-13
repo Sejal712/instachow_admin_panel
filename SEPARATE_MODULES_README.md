@@ -15,10 +15,12 @@ This project now has separate files and services for Food and Grocery categories
 - `lib/screens/grocery_categories_screen.dart` - Grocery categories management UI
 - `lib/screens/food_category_edit_screen.dart` - Food category edit UI
 - `lib/screens/grocery_category_edit_screen.dart` - Grocery category edit UI
+- `lib/screens/food_sub_categories_screen.dart` - Food sub-categories management UI
+- `lib/screens/grocery_sub_categories_screen.dart` - Grocery sub-categories management UI
 
 ### API Services
-- `lib/services/food_api_service.dart` - Food categories API calls
-- `lib/services/grocery_api_service.dart` - Grocery categories API calls
+- `lib/services/food_api_service.dart` - Food categories and sub-categories API calls
+- `lib/services/grocery_api_service.dart` - Grocery categories and sub-categories API calls
 
 ### Configuration
 - `lib/config/api_config.dart` - Updated with new endpoint URLs
@@ -80,6 +82,10 @@ When adding/editing categories:
 The following old files have been removed as they're no longer needed:
 - `food_category_updated.php` - Replaced by separate module files
 - `sub_categories.php` - Replaced by separate module files
+- `lib/screens/categories_screen.dart` - Replaced by separate module screens
+- `lib/screens/category_edit_screen.dart` - Replaced by separate module screens
+- `lib/screens/sub_categories_screen.dart` - Replaced by separate module screens
+- `lib/services/api_service.dart` - Replaced by separate module services
 
 ## 🔄 Migration Notes
 

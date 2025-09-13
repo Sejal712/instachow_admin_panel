@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../screens/food_categories_screen.dart';
 import '../screens/grocery_categories_screen.dart';
-import '../screens/sub_categories_screen.dart';
+import '../screens/food_sub_categories_screen.dart';
+import '../screens/grocery_sub_categories_screen.dart';
 
 class MainContent extends StatelessWidget {
   final String selectedOption;
@@ -26,7 +27,7 @@ class MainContent extends StatelessWidget {
       case 'Categories':
         return _buildCategoriesScreen();
       case 'Sub Category':
-        return SubCategoriesScreen(selectedModule: selectedModule);
+        return _buildSubCategoriesScreen();
       default:
         return _buildDefaultScreen(option);
     }
@@ -40,6 +41,17 @@ class MainContent extends StatelessWidget {
         return const GroceryCategoriesScreen();
       default:
         return const FoodCategoriesScreen(); // Default to Food
+    }
+  }
+
+  Widget _buildSubCategoriesScreen() {
+    switch (selectedModule) {
+      case 'Food':
+        return const FoodSubCategoriesScreen();
+      case 'Grocery':
+        return const GrocerySubCategoriesScreen();
+      default:
+        return const FoodSubCategoriesScreen(); // Default to Food
     }
   }
 

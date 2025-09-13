@@ -148,4 +148,120 @@ class FoodApiService {
       throw Exception('Error: $e');
     }
   }
+
+  // Get all food sub-categories
+  static Future<List<Map<String, dynamic>>> getFoodSubCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.foodSubCategoriesUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          return List<Map<String, dynamic>>.from(data['data']);
+        } else {
+          throw Exception(data['message'] ?? 'Failed to fetch food sub-categories');
+        }
+      } else {
+        throw Exception('HTTP ${response.statusCode}: Failed to fetch food sub-categories');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Add new food sub-category
+  static Future<Map<String, dynamic>> addFoodSubCategory({
+    required String name,
+    String? description,
+    required String masterCatId,
+  }) async {
+    try {
+      final requestBody = {
+        'name': name,
+        'description': description ?? '',
+        'master_cat_food_id': masterCatId,
+      };
+
+      final response = await http.post(
+        Uri.parse(ApiConfig.foodSubCategoriesUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          return data;
+        } else {
+          throw Exception(data['message']);
+        }
+      } else {
+        throw Exception('Failed to add food sub-category');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Update food sub-category
+  static Future<Map<String, dynamic>> updateFoodSubCategory({
+    required String id,
+    required String name,
+    String? description,
+    required String masterCatId,
+  }) async {
+    try {
+      final requestBody = {
+        'id': id,
+        'name': name,
+        'description': description ?? '',
+        'master_cat_food_id': masterCatId,
+        '_method': 'PUT',
+      };
+
+      final response = await http.post(
+        Uri.parse(ApiConfig.foodSubCategoriesUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          return data;
+        } else {
+          throw Exception(data['message']);
+        }
+      } else {
+        throw Exception('Failed to update food sub-category');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Delete food sub-category
+  static Future<bool> deleteFoodSubCategory(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${ApiConfig.foodSubCategoriesUrl}?id=$id'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['success'];
+      } else {
+        throw Exception('Failed to delete food sub-category');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 }

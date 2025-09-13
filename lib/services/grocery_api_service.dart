@@ -148,4 +148,120 @@ class GroceryApiService {
       throw Exception('Error: $e');
     }
   }
+
+  // Get all grocery sub-categories
+  static Future<List<Map<String, dynamic>>> getGrocerySubCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.grocerySubCategoriesUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          return List<Map<String, dynamic>>.from(data['data']);
+        } else {
+          throw Exception(data['message'] ?? 'Failed to fetch grocery sub-categories');
+        }
+      } else {
+        throw Exception('HTTP ${response.statusCode}: Failed to fetch grocery sub-categories');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Add new grocery sub-category
+  static Future<Map<String, dynamic>> addGrocerySubCategory({
+    required String name,
+    String? description,
+    required String masterCatId,
+  }) async {
+    try {
+      final requestBody = {
+        'name': name,
+        'description': description ?? '',
+        'master_cat_food_id': masterCatId,
+      };
+
+      final response = await http.post(
+        Uri.parse(ApiConfig.grocerySubCategoriesUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          return data;
+        } else {
+          throw Exception(data['message']);
+        }
+      } else {
+        throw Exception('Failed to add grocery sub-category');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Update grocery sub-category
+  static Future<Map<String, dynamic>> updateGrocerySubCategory({
+    required String id,
+    required String name,
+    String? description,
+    required String masterCatId,
+  }) async {
+    try {
+      final requestBody = {
+        'id': id,
+        'name': name,
+        'description': description ?? '',
+        'master_cat_food_id': masterCatId,
+        '_method': 'PUT',
+      };
+
+      final response = await http.post(
+        Uri.parse(ApiConfig.grocerySubCategoriesUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          return data;
+        } else {
+          throw Exception(data['message']);
+        }
+      } else {
+        throw Exception('Failed to update grocery sub-category');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Delete grocery sub-category
+  static Future<bool> deleteGrocerySubCategory(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${ApiConfig.grocerySubCategoriesUrl}?id=$id'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['success'];
+      } else {
+        throw Exception('Failed to delete grocery sub-category');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 }
