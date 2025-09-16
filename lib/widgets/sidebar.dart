@@ -92,7 +92,7 @@ class _SidebarState extends State<Sidebar> {
                     _buildMenuItem(Icons.point_of_sale, 'New Sale'),
                   ],
                 ),
-                
+
                 // ORDER MANAGEMENT
                 _buildSectionHeader('ORDER MANAGEMENT'),
                 _buildExpandableSection(
@@ -105,13 +105,14 @@ class _SidebarState extends State<Sidebar> {
                     _buildMenuItem(Icons.flash_on, 'Flash Sales'),
                   ],
                 ),
-                
+
                 // PROMOTION MANAGEMENT
                 _buildSectionHeader('PROMOTION MANAGEMENT'),
                 _buildExpandableSection(
                   'PROMOTION MANAGEMENT',
                   isPromotionManagementExpanded,
-                  (value) => setState(() => isPromotionManagementExpanded = value),
+                  (value) =>
+                      setState(() => isPromotionManagementExpanded = value),
                   [
                     _buildMenuItem(Icons.campaign, 'Campaigns'),
                     _buildMenuItem(Icons.flag, 'Banners'),
@@ -120,24 +121,32 @@ class _SidebarState extends State<Sidebar> {
                     _buildMenuItem(Icons.notifications, 'Push Notification'),
                   ],
                 ),
-                
+
                 // PRODUCT MANAGEMENT
                 _buildSectionHeader('PRODUCT MANAGEMENT'),
                 _buildExpandableSection(
                   'PRODUCT MANAGEMENT',
                   isProductManagementExpanded,
-                  (value) => setState(() => isProductManagementExpanded = value),
+                  (value) =>
+                      setState(() => isProductManagementExpanded = value),
                   [
                     _buildMenuItem(Icons.category, 'Categories'),
-                    _buildMenuItem(Icons.subdirectory_arrow_right, 'Sub Category'),
+                    _buildMenuItem(
+                      Icons.subdirectory_arrow_right,
+                      'Sub Category',
+                    ),
                     _buildMenuItem(Icons.file_upload, 'Bulk Import'),
                     _buildMenuItem(Icons.file_download, 'Bulk Export'),
                     _buildMenuItem(Icons.tune, 'Attributes'),
                     _buildMenuItem(Icons.straighten, 'Units'),
                     _buildMenuItem(Icons.settings, 'Product Setup'),
+                    _buildMenuItem(
+                      Icons.restaurant_menu,
+                      'Add Nutrition & Allergen Ingredients',
+                    ),
                   ],
                 ),
-                
+
                 // STORE MANAGEMENT
                 _buildSectionHeader('STORE MANAGEMENT'),
                 _buildExpandableSection(
@@ -187,18 +196,12 @@ class _SidebarState extends State<Sidebar> {
                       ),
                       Text(
                         'jhondoe@gammin.com',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.white70,
-                ),
+                const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
               ],
             ),
           ),
@@ -231,10 +234,7 @@ class _SidebarState extends State<Sidebar> {
     return ExpansionTile(
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.transparent,
-          fontSize: 0,
-        ),
+        style: const TextStyle(color: Colors.transparent, fontSize: 0),
       ),
       initiallyExpanded: isExpanded,
       onExpansionChanged: onExpansionChanged,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/categories_screen.dart';
 import '../screens/sub_categories_screen.dart';
+import '../screens/nutrition_allergen_screen.dart';
 
 class MainContent extends StatelessWidget {
   final String selectedOption;
@@ -26,6 +27,8 @@ class MainContent extends StatelessWidget {
         return CategoriesScreen(selectedModule: selectedModule);
       case 'Sub Category':
         return SubCategoriesScreen(selectedModule: selectedModule);
+      case 'Add Nutrition & Allergen Ingredients':
+        return const NutritionAllergenScreen();
       default:
         return _buildDefaultScreen(option);
     }
@@ -38,11 +41,7 @@ class MainContent extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              _getIconForOption(option),
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(_getIconForOption(option), size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'Welcome to $option',
@@ -55,10 +54,7 @@ class MainContent extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Content for $option will be displayed here.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -102,6 +98,8 @@ class MainContent extends StatelessWidget {
         return Icons.straighten;
       case 'Product Setup':
         return Icons.settings;
+      case 'Add Nutrition & Allergen Ingredients':
+        return Icons.restaurant_menu;
       case 'New Stores':
         return Icons.store;
       case 'Add Store':
