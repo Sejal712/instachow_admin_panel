@@ -1,23 +1,18 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../services/api_service.dart';
+import '../services/food_api_service.dart';
 import '../config/api_config.dart';
-import 'category_edit_screen.dart';
+import 'food_category_edit_screen.dart';
 
-class CategoriesScreen extends StatefulWidget {
-  final String selectedModule;
-  
-  const CategoriesScreen({
-    super.key,
-    required this.selectedModule,
-  });
+class FoodCategoriesScreen extends StatefulWidget {
+  const FoodCategoriesScreen({super.key});
 
   @override
-  State<CategoriesScreen> createState() => _CategoriesScreenState();
+  State<FoodCategoriesScreen> createState() => _FoodCategoriesScreenState();
 }
 
-class _CategoriesScreenState extends State<CategoriesScreen> {
+class _FoodCategoriesScreenState extends State<FoodCategoriesScreen> {
   int _selectedLanguageIndex = 0;
   final TextEditingController _categoryNameController = TextEditingController();
   final TextEditingController _iconUrlController = TextEditingController();
@@ -34,26 +29,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   @override
-  void didUpdateWidget(CategoriesScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Reload categories if the module has changed
-    if (oldWidget.selectedModule != widget.selectedModule) {
-      ApiConfig.debugLog('Module changed from ${oldWidget.selectedModule} to ${widget.selectedModule}, reloading categories...');
-      
-      // Force clear the state first
-      setState(() {
-        _foodCategories = [];
-        _isLoading = true;
-      });
-      
-      // Add a small delay to ensure state is cleared
-      Future.delayed(Duration(milliseconds: 100), () {
-        _loadFoodCategories();
-      });
-    }
-  }
-
-  @override
   void dispose() {
     _categoryNameController.dispose();
     _iconUrlController.dispose();
@@ -63,7 +38,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Future<void> _pickImage() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         allowMultiple: false,
       );
 
@@ -93,31 +69,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Future<void> _loadFoodCategories() async {
     setState(() {
       _isLoading = true;
-      _foodCategories = []; // Clear existing data first
     });
 
     try {
-      ApiConfig.debugLog('Loading categories for module: ${widget.selectedModule}');
-      final categories = await ApiService.getFoodCategories(module: widget.selectedModule);
-      
+      final categories = await FoodApiService.getFoodCategories();
       setState(() {
         _foodCategories = categories;
         _isLoading = false;
       });
-      
-      ApiConfig.debugLog('Successfully retrieved ${categories.length} categories for ${widget.selectedModule}');
-      
-      // Debug: Log each category
-      for (var category in categories) {
-        ApiConfig.debugLog('Category: ${category['name']} (module: ${category['module']})');
-      }
-      
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _foodCategories = []; // Ensure empty list on error
       });
-      ApiConfig.debugLog('Error loading categories: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -130,7 +93,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<void> _addFoodCategory() async {
-    // Validate category name
     if (_categoryNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -141,7 +103,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       return;
     }
 
-    // Validate image upload (mandatory)
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -157,26 +118,23 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     });
 
     try {
-      await ApiService.addFoodCategory(
+      await FoodApiService.addFoodCategory(
         name: _categoryNameController.text.trim(),
         iconUrl: _iconUrlController.text.trim(),
         imageFile: _selectedImage,
-        module: widget.selectedModule,
       );
       
-      // Clear form after successful addition
       _categoryNameController.clear();
       _iconUrlController.clear();
       _removeImage();
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Category added successfully!'),
+          content: Text('Food category added successfully!'),
           backgroundColor: Colors.green,
         ),
       );
       
-      // Reload categories to show updated list
       await _loadFoodCategories();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +179,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Future<void> _deleteCategory(int categoryId) async {
     try {
-      final success = await ApiService.deleteFoodCategory(categoryId);
+      final success = await FoodApiService.deleteFoodCategory(categoryId);
       
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -231,7 +189,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           ),
         );
         
-        // Reload categories to reflect the deletion
         await _loadFoodCategories();
       } else {
         throw Exception('Failed to delete category');
@@ -249,23 +206,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      key: ValueKey('categories_${widget.selectedModule}'), // Force rebuild when module changes
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-            // Header with icon and title
-            Row(
-              children: [
+          // Header
+          Row(
+            children: [
               Icon(
-                _getModuleIcon(widget.selectedModule),
+                Icons.restaurant,
                 size: 24,
-                color: _getModuleColor(widget.selectedModule),
+                color: Colors.orange[600],
               ),
               const SizedBox(width: 12),
-              Text(
-                'Add New ${widget.selectedModule} Category',
-                style: const TextStyle(
+              const Text(
+                'Food Categories Management',
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -278,31 +234,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: _getModuleColor(widget.selectedModule).withOpacity(0.1),
+                  color: Colors.orange[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'Module: ${widget.selectedModule}',
+                  'Food Module',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: _getModuleColor(widget.selectedModule),
+                    color: Colors.orange[700],
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
           
-          // Language tabs
-          Row(
-            children: [
-              _buildLanguageTab('Default', true),
-              _buildLanguageTab('English(EN)', false),
-              _buildLanguageTab('Arabic - العربية(AR)', false),
-            ],
-          ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           
           // Form section
           Expanded(
@@ -317,7 +264,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     children: [
                       // Name field
                       const Text(
-                        'Name (Default) *',
+                        'Name *',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -333,7 +280,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         child: TextField(
                           controller: _categoryNameController,
                           decoration: const InputDecoration(
-                            hintText: 'New category',
+                            hintText: 'New food category',
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
@@ -369,16 +316,25 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           ElevatedButton(
                             onPressed: _isAddingCategory ? null : _addFoodCategory,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2D7D7D),
+                              backgroundColor: Colors.orange[600],
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
                                 vertical: 12,
                               ),
                             ),
-                            child: const Text(
-                              'Add',
-                              style: TextStyle(color: Colors.white),
-                            ),
+                            child: _isAddingCategory
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Add',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                           ),
                         ],
                       ),
@@ -516,6 +472,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         color: Colors.red[600],
                                       ),
                                     ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Supports: JPG, PNG, GIF, WebP (Max 5MB)',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
                                     const SizedBox(height: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
@@ -565,7 +529,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               Row(
                 children: [
                   const Text(
-                    'Category List',
+                    'Food Categories List',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -579,60 +543,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: Colors.orange[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '${_getModuleCategories(widget.selectedModule).length}',
-                      style: const TextStyle(
+                      '${_foodCategories.length}',
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
+                        color: Colors.orange[700],
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Container(
-                    width: 200,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search categories',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        suffixIcon: Icon(Icons.search, size: 20),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.file_download, size: 16),
-                        SizedBox(width: 4),
-                        Text(
-                          'Export',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        SizedBox(width: 4),
-                        Icon(Icons.keyboard_arrow_down, size: 16),
-                      ],
                     ),
                   ),
                 ],
@@ -740,112 +660,146 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       ],
                     ),
                   ),
-                  // Table rows - Dynamic based on module
+                  // Table rows
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: _getModuleCategories(widget.selectedModule).length,
-                      itemBuilder: (context, index) {
-                        final category = _getModuleCategories(widget.selectedModule)[index];
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.grey[200]!,
-                                width: 1,
-                              ),
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: Text('${index + 1}'),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text('${category['id']}'),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text('${category['name']}'),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Switch(
-                                  value: category['status'],
-                                  onChanged: (value) {},
-                                  activeColor: _getModuleColor(widget.selectedModule),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Switch(
-                                  value: category['featured'],
-                                  onChanged: (value) {},
-                                  activeColor: _getModuleColor(widget.selectedModule),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: DropdownButton<String>(
-                                  value: 'Normal',
-                                  items: ['Normal', 'High', 'Low']
-                                      .map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {},
-                                  underline: Container(),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Row(
+                          )
+                        : _foodCategories.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.edit,
-                                        size: 18,
-                                        color: Colors.blue,
-                                      ),
-                                      onPressed: () async {
-                                        final result = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => CategoryEditScreen(
-                                              category: category,
-                                            ),
-                                          ),
-                                        );
-                                        
-                                        // Reload categories if update was successful
-                                        if (result == true) {
-                                          await _loadFoodCategories();
-                                        }
-                                      },
+                                    Icon(
+                                      Icons.restaurant_outlined,
+                                      size: 64,
+                                      color: Colors.grey[400],
                                     ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        size: 18,
-                                        color: Colors.red,
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No food categories found',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
                                       ),
-                                      onPressed: () => _showDeleteConfirmation(category),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Add your first food category above',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[500],
+                                      ),
                                     ),
                                   ],
                                 ),
+                              )
+                            : ListView.builder(
+                                itemCount: _foodCategories.length,
+                                itemBuilder: (context, index) {
+                                  final category = _foodCategories[index];
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Colors.grey[200]!,
+                                          width: 1,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text('${index + 1}'),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text('${category['id']}'),
+                                        ),
+                                        Expanded(
+                                          flex: 2,
+                                          child: Text('${category['name']}'),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Switch(
+                                            value: true, // Default active status
+                                            onChanged: (value) {},
+                                            activeColor: Colors.orange[600],
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Switch(
+                                            value: false, // Default not featured
+                                            onChanged: (value) {},
+                                            activeColor: Colors.orange[600],
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: DropdownButton<String>(
+                                            value: 'Normal',
+                                            items: ['Normal', 'High', 'Low']
+                                                .map((String value) {
+                                              return DropdownMenuItem<String>(
+                                                value: value,
+                                                child: Text(value),
+                                              );
+                                            }).toList(),
+                                            onChanged: (String? newValue) {},
+                                            underline: Container(),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Row(
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.edit,
+                                                  size: 18,
+                                                  color: Colors.blue,
+                                                ),
+                                                onPressed: () async {
+                                                  final result = await Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => FoodCategoryEditScreen(
+                                                        category: category,
+                                                      ),
+                                                    ),
+                                                  );
+                                                  
+                                                  if (result == true) {
+                                                    await _loadFoodCategories();
+                                                  }
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete,
+                                                  size: 18,
+                                                  color: Colors.red,
+                                                ),
+                                                onPressed: () => _showDeleteConfirmation(category),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ),
@@ -854,118 +808,5 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildLanguageTab(String title, bool isActive) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF2D7D7D) : Colors.transparent,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: isActive ? const Color(0xFF2D7D7D) : Colors.grey[300]!,
-        ),
-      ),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: isActive ? Colors.white : Colors.black87,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  IconData _getModuleIcon(String module) {
-    switch (module) {
-      case 'Grocery':
-        return Icons.shopping_cart;
-      case 'Pharmacy':
-        return Icons.local_pharmacy;
-      case 'Shop':
-        return Icons.shopping_bag;
-      case 'Food':
-        return Icons.restaurant;
-      case 'Parcel':
-        return Icons.local_shipping;
-      case 'Rental':
-        return Icons.car_rental;
-      default:
-        return Icons.category;
-    }
-  }
-
-  Color _getModuleColor(String module) {
-    switch (module) {
-      case 'Grocery':
-        return const Color(0xFF2D7D7D);
-      case 'Pharmacy':
-        return const Color(0xFF4CAF50);
-      case 'Shop':
-        return const Color(0xFF2196F3);
-      case 'Food':
-        return const Color(0xFFFF9800);
-      case 'Parcel':
-        return const Color(0xFF9C27B0);
-      case 'Rental':
-        return const Color(0xFF607D8B);
-      default:
-        return const Color(0xFF2D7D7D);
-    }
-  }
-
-  List<Map<String, dynamic>> _getModuleCategories(String module) {
-    switch (module) {
-      case 'Grocery':
-        return _foodCategories.map((category) => {
-          'id': category['id'],
-          'name': category['name'],
-          'icon_url': category['icon_url'],
-          'created_at': category['created_at'],
-          'status': true, // Default active status
-          'featured': false, // Default not featured
-          'priority': 1, // Default priority
-        }).toList();
-      case 'Pharmacy':
-        return [
-          {'id': 201, 'name': 'Medicines', 'status': true, 'featured': true},
-          {'id': 202, 'name': 'Health Care', 'status': true, 'featured': false},
-          {'id': 203, 'name': 'Personal Care', 'status': true, 'featured': false},
-        ];
-      case 'Shop':
-        return [
-          {'id': 301, 'name': 'Electronics', 'status': true, 'featured': true},
-          {'id': 302, 'name': 'Clothing', 'status': true, 'featured': false},
-          {'id': 303, 'name': 'Accessories', 'status': true, 'featured': false},
-        ];
-      case 'Food':
-        return _foodCategories.map((category) => {
-          'id': category['id'],
-          'name': category['name'],
-          'icon_url': category['icon_url'],
-          'created_at': category['created_at'],
-          'status': true, // Default active status
-          'featured': false, // Default not featured
-          'priority': 1, // Default priority
-        }).toList();
-      case 'Parcel':
-        return [
-          {'id': 501, 'name': 'Documents', 'status': true, 'featured': false},
-          {'id': 502, 'name': 'Packages', 'status': true, 'featured': true},
-          {'id': 503, 'name': 'Express', 'status': true, 'featured': false},
-        ];
-      case 'Rental':
-        return [
-          {'id': 601, 'name': 'Cars', 'status': true, 'featured': true},
-          {'id': 602, 'name': 'Bikes', 'status': true, 'featured': false},
-          {'id': 603, 'name': 'Equipment', 'status': true, 'featured': false},
-        ];
-      default:
-        return [
-          {'id': 129, 'name': 'Default Category', 'status': true, 'featured': false},
-        ];
-    }
   }
 }

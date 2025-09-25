@@ -48,7 +48,7 @@ class _SidebarState extends State<Sidebar> {
                 ),
                 const SizedBox(width: 12),
                 const Text(
-                  'GamMart',
+                  'InstaChow',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,

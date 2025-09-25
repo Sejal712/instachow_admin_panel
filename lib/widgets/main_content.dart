@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import '../screens/categories_screen.dart';
-import '../screens/sub_categories_screen.dart';
+import '../screens/food_categories_screen.dart';
+import '../screens/grocery_categories_screen.dart';
+import '../screens/pharmacy_categories_screen.dart';
+import '../screens/food_sub_categories_screen.dart';
+import '../screens/grocery_sub_categories_screen.dart';
 import '../screens/nutrition_allergen_screen.dart';
+import '../screens/pharmacy_sub_categories_screen.dart';
 
 class MainContent extends StatelessWidget {
   final String selectedOption;
@@ -24,13 +28,39 @@ class MainContent extends StatelessWidget {
   Widget _buildContentForOption(String option) {
     switch (option) {
       case 'Categories':
-        return CategoriesScreen(selectedModule: selectedModule);
+        return _buildCategoriesScreen();
       case 'Sub Category':
-        return SubCategoriesScreen(selectedModule: selectedModule);
+        return _buildSubCategoriesScreen();
       case 'Add Nutrition & Allergen Ingredients':
         return const NutritionAllergenScreen();
       default:
         return _buildDefaultScreen(option);
+    }
+  }
+
+  Widget _buildCategoriesScreen() {
+    switch (selectedModule) {
+      case 'Food':
+        return const FoodCategoriesScreen();
+      case 'Grocery':
+        return const GroceryCategoriesScreen();
+      case 'Pharmacy':
+        return const PharmacyCategoriesScreen();
+      default:
+        return const FoodCategoriesScreen(); // Default to Food
+    }
+  }
+
+  Widget _buildSubCategoriesScreen() {
+    switch (selectedModule) {
+      case 'Food':
+        return const FoodSubCategoriesScreen();
+      case 'Grocery':
+        return const GrocerySubCategoriesScreen();
+      case 'Pharmacy':
+        return const PharmacySubCategoriesScreen();
+      default:
+        return const FoodSubCategoriesScreen(); // Default to Food
     }
   }
 

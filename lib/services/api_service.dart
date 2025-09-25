@@ -4,7 +4,54 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 
 class ApiService {
-  // Get all food categories
+  // Get all pharmacy categories
+  static Future<List<Map<String, dynamic>>> getPharmacyCategories() async {
+    try {
+      ApiConfig.debugLog('Starting getPharmacyCategories request');
+      ApiConfig.debugLog('Request URL: ${ApiConfig.pharmacyCategoriesUrl}');
+
+      final response = await http.get(
+        Uri.parse(ApiConfig.pharmacyCategoriesUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      );
+
+      ApiConfig.debugLog(
+        'Pharmacy categories response status: ${response.statusCode}',
+      );
+      ApiConfig.debugLog('Pharmacy categories response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+
+        if (data['success'] == true) {
+          List<Map<String, dynamic>> categories =
+              List<Map<String, dynamic>>.from(data['data']);
+          ApiConfig.debugLog(
+            'Successfully retrieved ${categories.length} pharmacy categories',
+          );
+          return categories;
+        } else {
+          throw Exception(
+            data['message'] ?? 'Failed to fetch pharmacy categories',
+          );
+        }
+      } else {
+        throw Exception(
+          'HTTP ${response.statusCode}: Failed to fetch pharmacy categories',
+        );
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in getPharmacyCategories: $e');
+      rethrow;
+    }
+  }
+
+  // Get all categories (Food, Grocery, Pharmacy)
   static Future<List<Map<String, dynamic>>> getFoodCategories({
     String? module,
   }) async {
@@ -20,7 +67,9 @@ class ApiService {
       String separator = url.contains('?') ? '&' : '?';
       url += '${separator}t=${DateTime.now().millisecondsSinceEpoch}';
 
-      ApiConfig.debugLog('Fetching food categories from: $url');
+      ApiConfig.debugLog(
+        'Fetching categories from: $url (Module: ${module ?? 'all'})',
+      );
 
       final response = await http.get(
         Uri.parse(url),
@@ -31,10 +80,8 @@ class ApiService {
         },
       );
 
-      ApiConfig.debugLog(
-        'Food categories response status: ${response.statusCode}',
-      );
-      ApiConfig.debugLog('Food categories response body: ${response.body}');
+      ApiConfig.debugLog('Categories response status: ${response.statusCode}');
+      ApiConfig.debugLog('Categories response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -48,11 +95,11 @@ class ApiService {
           );
           return categories;
         } else {
-          throw Exception(data['message'] ?? 'Failed to fetch food categories');
+          throw Exception(data['message'] ?? 'Failed to fetch categories');
         }
       } else {
         throw Exception(
-          'HTTP ${response.statusCode}: Failed to fetch food categories',
+          'HTTP ${response.statusCode}: Failed to fetch categories',
         );
       }
     } catch (e) {
@@ -61,7 +108,457 @@ class ApiService {
     }
   }
 
-  // Add new food category with image upload
+  // Update pharmacy category with image upload support
+  static Future<Map<String, dynamic>> updatePharmacyCategory({
+    required int id,
+    required String name,
+    File? imageFile,
+  }) async {
+    try {
+      ApiConfig.debugLog('Starting updatePharmacyCategory request');
+      ApiConfig.debugLog('Request URL: ${ApiConfig.pharmacyCategoriesUrl}');
+      ApiConfig.debugLog('Category ID: $id');
+      ApiConfig.debugLog('Category name: $name');
+      ApiConfig.debugLog('Image file: ${imageFile?.path ?? 'null'}');
+
+      http.Response response;
+
+      if (imageFile != null) {
+        // Create multipart request for image upload (use POST with method override for PHP compatibility)
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse(ApiConfig.pharmacyCategoriesUrl),
+        );
+
+        // Add text fields
+        request.fields['_method'] = 'PUT'; // Method override for PHP
+        request.fields['id'] = id.toString();
+        request.fields['name'] = name;
+
+        // Debug: Log all fields being sent
+        ApiConfig.debugLog('Multipart fields: ${request.fields}');
+
+        // Add image file
+        request.files.add(
+          await http.MultipartFile.fromPath('image', imageFile.path),
+        );
+
+        // Debug: Log file info
+        ApiConfig.debugLog(
+          'Multipart files: ${request.files.map((f) => '${f.field}: ${f.filename}').toList()}',
+        );
+        ApiConfig.debugLog('Sending multipart request with image');
+        var streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        // Regular JSON request without image
+        final requestBody = {'id': id, 'name': name};
+        ApiConfig.debugLog('Request body: $requestBody');
+
+        response = await http.put(
+          Uri.parse(ApiConfig.pharmacyCategoriesUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(requestBody),
+        );
+      }
+
+      ApiConfig.debugLog('Response status code: ${response.statusCode}');
+      ApiConfig.debugLog('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+
+        if (data['success']) {
+          ApiConfig.debugLog(
+            'Pharmacy category updated successfully: ${data['data']}',
+          );
+          return data['data'];
+        } else {
+          ApiConfig.debugLog(
+            'Failed to update pharmacy category - API returned success=false: ${data['message']}',
+          );
+          throw Exception(data['message']);
+        }
+      } else {
+        ApiConfig.debugLog(
+          'HTTP request failed with status: ${response.statusCode}',
+        );
+        throw Exception('Failed to update pharmacy category');
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in updatePharmacyCategory: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Delete pharmacy category
+  static Future<bool> deletePharmacyCategory(int id) async {
+    try {
+      ApiConfig.debugLog('Starting deletePharmacyCategory request');
+      ApiConfig.debugLog('Request URL: ${ApiConfig.pharmacyCategoriesUrl}');
+      ApiConfig.debugLog('Category ID to delete: $id');
+
+      final requestBody = {'id': id};
+      ApiConfig.debugLog('Request body: $requestBody');
+
+      final response = await http.delete(
+        Uri.parse(ApiConfig.pharmacyCategoriesUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      ApiConfig.debugLog('Response status code: ${response.statusCode}');
+      ApiConfig.debugLog('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+        ApiConfig.debugLog('Delete success: ${data['success']}');
+        return data['success'];
+      } else {
+        ApiConfig.debugLog(
+          'HTTP request failed with status: ${response.statusCode}',
+        );
+        throw Exception('Failed to delete pharmacy category');
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in deletePharmacyCategory: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Get all pharmacy sub-categories
+  static Future<List<Map<String, dynamic>>> getPharmacySubCategories() async {
+    try {
+      ApiConfig.debugLog('Starting getPharmacySubCategories request');
+      ApiConfig.debugLog('Request URL: ${ApiConfig.pharmacySubCategoriesUrl}');
+
+      final response = await http.get(
+        Uri.parse(ApiConfig.pharmacySubCategoriesUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      );
+
+      ApiConfig.debugLog(
+        'Pharmacy sub-categories response status: ${response.statusCode}',
+      );
+      ApiConfig.debugLog(
+        'Pharmacy sub-categories response body: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+
+        if (data['success'] == true) {
+          List<Map<String, dynamic>> subCategories =
+              List<Map<String, dynamic>>.from(data['data']);
+          ApiConfig.debugLog(
+            'Successfully retrieved ${subCategories.length} pharmacy sub-categories',
+          );
+          return subCategories;
+        } else {
+          throw Exception(
+            data['message'] ?? 'Failed to fetch pharmacy sub-categories',
+          );
+        }
+      } else {
+        throw Exception(
+          'HTTP ${response.statusCode}: Failed to fetch pharmacy sub-categories',
+        );
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in getPharmacySubCategories: $e');
+      rethrow;
+    }
+  }
+
+  // Get pharmacy main categories for sub-category creation
+  static Future<List<Map<String, dynamic>>> getPharmacyMainCategories() async {
+    try {
+      ApiConfig.debugLog('Starting getPharmacyMainCategories request');
+      final url = '${ApiConfig.pharmacySubCategoriesUrl}?main_categories=true';
+      ApiConfig.debugLog('Request URL: $url');
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      );
+
+      ApiConfig.debugLog(
+        'Pharmacy main categories response status: ${response.statusCode}',
+      );
+      ApiConfig.debugLog(
+        'Pharmacy main categories response body: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+
+        if (data['success'] == true) {
+          List<Map<String, dynamic>> categories =
+              List<Map<String, dynamic>>.from(data['data']);
+          ApiConfig.debugLog(
+            'Successfully retrieved ${categories.length} pharmacy main categories',
+          );
+          return categories;
+        } else {
+          throw Exception(
+            data['message'] ?? 'Failed to fetch pharmacy main categories',
+          );
+        }
+      } else {
+        throw Exception(
+          'HTTP ${response.statusCode}: Failed to fetch pharmacy main categories',
+        );
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in getPharmacyMainCategories: $e');
+      rethrow;
+    }
+  }
+
+  // Add new pharmacy sub-category
+  static Future<Map<String, dynamic>> addPharmacySubCategory({
+    required String name,
+    String? description,
+    required int masterCategoryId,
+  }) async {
+    try {
+      ApiConfig.debugLog('Starting addPharmacySubCategory request');
+      ApiConfig.debugLog('Request URL: ${ApiConfig.pharmacySubCategoriesUrl}');
+      ApiConfig.debugLog('Sub-category name: $name');
+      ApiConfig.debugLog('Description: ${description ?? "none provided"}');
+      ApiConfig.debugLog('Master category ID: $masterCategoryId');
+
+      final requestBody = {
+        'name': name,
+        'description': description ?? '',
+        'master_category_id': masterCategoryId,
+      };
+      ApiConfig.debugLog('Request body: $requestBody');
+
+      final response = await http.post(
+        Uri.parse(ApiConfig.pharmacySubCategoriesUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      ApiConfig.debugLog('Response status code: ${response.statusCode}');
+      ApiConfig.debugLog('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+
+        if (data['success']) {
+          ApiConfig.debugLog(
+            'Pharmacy sub-category added successfully: ${data['data']}',
+          );
+          return data['data'];
+        } else {
+          ApiConfig.debugLog(
+            'Failed to add pharmacy sub-category - API returned success=false: ${data['message']}',
+          );
+          throw Exception(data['message']);
+        }
+      } else {
+        ApiConfig.debugLog(
+          'HTTP request failed with status: ${response.statusCode}',
+        );
+        throw Exception('Failed to add pharmacy sub-category');
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in addPharmacySubCategory: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Update pharmacy sub-category
+  static Future<Map<String, dynamic>> updatePharmacySubCategory({
+    required int id,
+    required String name,
+    String? description,
+    required int masterCategoryId,
+  }) async {
+    try {
+      ApiConfig.debugLog('Starting updatePharmacySubCategory request');
+      ApiConfig.debugLog('Request URL: ${ApiConfig.pharmacySubCategoriesUrl}');
+      ApiConfig.debugLog('Sub-category ID: $id');
+      ApiConfig.debugLog('Sub-category name: $name');
+      ApiConfig.debugLog('Description: ${description ?? "none provided"}');
+      ApiConfig.debugLog('Master category ID: $masterCategoryId');
+
+      final requestBody = {
+        'id': id,
+        'name': name,
+        'description': description ?? '',
+        'master_category_id': masterCategoryId,
+      };
+      ApiConfig.debugLog('Request body: $requestBody');
+
+      final response = await http.put(
+        Uri.parse(ApiConfig.pharmacySubCategoriesUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      ApiConfig.debugLog('Response status code: ${response.statusCode}');
+      ApiConfig.debugLog('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+
+        if (data['success']) {
+          ApiConfig.debugLog(
+            'Pharmacy sub-category updated successfully: ${data['data']}',
+          );
+          return data['data'];
+        } else {
+          ApiConfig.debugLog(
+            'Failed to update pharmacy sub-category - API returned success=false: ${data['message']}',
+          );
+          throw Exception(data['message']);
+        }
+      } else {
+        ApiConfig.debugLog(
+          'HTTP request failed with status: ${response.statusCode}',
+        );
+        throw Exception('Failed to update pharmacy sub-category');
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in updatePharmacySubCategory: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Delete pharmacy sub-category
+  static Future<bool> deletePharmacySubCategory(int id) async {
+    try {
+      ApiConfig.debugLog('Starting deletePharmacySubCategory request');
+      ApiConfig.debugLog('Request URL: ${ApiConfig.pharmacySubCategoriesUrl}');
+      ApiConfig.debugLog('Sub-category ID to delete: $id');
+
+      final requestBody = {'id': id};
+      ApiConfig.debugLog('Request body: $requestBody');
+
+      final response = await http.delete(
+        Uri.parse(ApiConfig.pharmacySubCategoriesUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      ApiConfig.debugLog('Response status code: ${response.statusCode}');
+      ApiConfig.debugLog('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+        ApiConfig.debugLog('Delete success: ${data['success']}');
+        return data['success'];
+      } else {
+        ApiConfig.debugLog(
+          'HTTP request failed with status: ${response.statusCode}',
+        );
+        throw Exception('Failed to delete pharmacy sub-category');
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in deletePharmacySubCategory: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Add new pharmacy category with image upload
+  static Future<Map<String, dynamic>> addPharmacyCategory({
+    required String name,
+    File? imageFile,
+  }) async {
+    try {
+      ApiConfig.debugLog('Starting addPharmacyCategory request');
+      ApiConfig.debugLog('Request URL: ${ApiConfig.pharmacyCategoriesUrl}');
+      ApiConfig.debugLog('Category name: $name');
+      ApiConfig.debugLog('Image file: ${imageFile?.path ?? "none provided"}');
+
+      http.Response response;
+
+      if (imageFile != null) {
+        // Create multipart request for image upload
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse(ApiConfig.pharmacyCategoriesUrl),
+        );
+
+        // Add text fields
+        request.fields['name'] = name;
+
+        // Debug: Log all fields being sent
+        ApiConfig.debugLog('Multipart fields: ${request.fields}');
+
+        // Add image file
+        request.files.add(
+          await http.MultipartFile.fromPath('image', imageFile.path),
+        );
+
+        // Debug: Log file info
+        ApiConfig.debugLog(
+          'Multipart files: ${request.files.map((f) => '${f.field}: ${f.filename}').toList()}',
+        );
+        ApiConfig.debugLog('Sending multipart request with image');
+        var streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        // Regular JSON request without image
+        final requestBody = {'name': name};
+        ApiConfig.debugLog('Request body: $requestBody');
+
+        response = await http.post(
+          Uri.parse(ApiConfig.pharmacyCategoriesUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(requestBody),
+        );
+      }
+
+      ApiConfig.debugLog('Response status code: ${response.statusCode}');
+      ApiConfig.debugLog('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ApiConfig.debugLog('Decoded response data: $data');
+
+        if (data['success']) {
+          ApiConfig.debugLog(
+            'Pharmacy category added successfully: ${data['data']}',
+          );
+          return data['data'];
+        } else {
+          ApiConfig.debugLog(
+            'Failed to add pharmacy category - API returned success=false: ${data['message']}',
+          );
+          throw Exception(data['message']);
+        }
+      } else {
+        ApiConfig.debugLog(
+          'HTTP request failed with status: ${response.statusCode}',
+        );
+        throw Exception('Failed to add pharmacy category');
+      }
+    } catch (e) {
+      ApiConfig.debugLog('Exception in addPharmacyCategory: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Add new category with image upload (Food, Grocery, Pharmacy)
   static Future<Map<String, dynamic>> addFoodCategory({
     required String name,
     String? iconUrl,

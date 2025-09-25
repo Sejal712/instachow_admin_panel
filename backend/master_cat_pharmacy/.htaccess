@@ -1,0 +1,24 @@
+# Allow image uploads and access
+
+Options -Indexes
+AllowOverride None
+
+# Allow common image types
+
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+Order Allow,Deny
+Allow from all
+</FilesMatch>
+
+# Set proper MIME types
+
+AddType image/jpeg .jpg .jpeg
+AddType image/png .png
+AddType image/gif .gif
+AddType image/webp .webp
+
+# Enable CORS for images
+
+Header always set Access-Control-Allow-Origin "\*"
+Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization"

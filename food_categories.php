@@ -1,4 +1,8 @@
 <?php
+// Suppress PHP errors to prevent HTML output
+error_reporting(0);
+ini_set('display_errors', 0);
+
 require_once 'db.php';
 
 $database = new Database();
@@ -31,12 +35,8 @@ switch($method) {
 
 function getFoodCategories($db) {
     try {
-        // Get module filter from query parameter
-        $module = $_GET['module'] ?? 'Food';
-        
-        $query = "SELECT maste_cat_food_id, name, icon_url, module, created_at FROM master_categories WHERE module = :module ORDER BY created_at DESC";
+        $query = "SELECT maste_cat_food_id, name, icon_url, module, created_at FROM master_categories WHERE module = 'Food' ORDER BY created_at DESC";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(':module', $module);
         $stmt->execute();
         
         $categories = [];
@@ -59,17 +59,16 @@ function getFoodCategories($db) {
 function addFoodCategory($db) {
     $name = '';
     $icon_url = '';
-    $module = 'Food'; // Default to Food
+    $module = 'Food'; // Fixed to Food module
     
     $content_type = $_SERVER['CONTENT_TYPE'] ?? '';
     
     if (strpos($content_type, 'multipart/form-data') !== false) {
         $name = $_POST['name'] ?? '';
         $icon_url = $_POST['icon_url'] ?? '';
-        $module = $_POST['module'] ?? 'Food';
         
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $uploaded_image_path = handleImageUpload($_FILES['image']);
+            $uploaded_image_path = handleFoodImageUpload($_FILES['image']);
             if ($uploaded_image_path) {
                 $icon_url = $uploaded_image_path;
             }
@@ -78,7 +77,6 @@ function addFoodCategory($db) {
         $data = json_decode(file_get_contents("php://input"), true);
         $name = $data['name'] ?? '';
         $icon_url = $data['icon_url'] ?? '';
-        $module = $data['module'] ?? 'Food';
     }
     
     if (empty($name)) {
@@ -123,6 +121,7 @@ function updateFoodCategory($db) {
     $id = '';
     $name = '';
     $icon_url = '';
+    $module = 'Food'; // Fixed to Food module
     
     $content_type = $_SERVER['CONTENT_TYPE'] ?? '';
     
@@ -133,7 +132,7 @@ function updateFoodCategory($db) {
         $icon_url = $_POST['icon_url'] ?? '';
         
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $uploaded_image_path = handleImageUpload($_FILES['image']);
+            $uploaded_image_path = handleFoodImageUpload($_FILES['image']);
             if ($uploaded_image_path) {
                 $icon_url = $uploaded_image_path;
             }
@@ -156,7 +155,7 @@ function updateFoodCategory($db) {
     }
     
     try {
-        $query = "UPDATE master_categories SET name = :name, icon_url = :icon_url WHERE maste_cat_food_id = :id";
+        $query = "UPDATE master_categories SET name = :name, icon_url = :icon_url WHERE maste_cat_food_id = :id AND module = 'Food'";
         $stmt = $db->prepare($query);
         
         $stmt->bindParam(':id', $id);
@@ -196,7 +195,7 @@ function deleteFoodCategory($db) {
     }
     
     try {
-        $query = "DELETE FROM master_categories WHERE maste_cat_food_id = :id";
+        $query = "DELETE FROM master_categories WHERE maste_cat_food_id = :id AND module = 'Food'";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':id', $data['id']);
         
@@ -210,7 +209,7 @@ function deleteFoodCategory($db) {
     }
 }
 
-function handleImageUpload($file) {
+function handleFoodImageUpload($file) {
     $upload_dir = 'master_cat_food_img/';
     
     if (!is_dir($upload_dir)) {
@@ -230,7 +229,7 @@ function handleImageUpload($file) {
         return false;
     }
     
-    $new_filename = uniqid('cat_', true) . '.' . $file_extension;
+    $new_filename = uniqid('food_cat_', true) . '.' . $file_extension;
     $upload_path = $upload_dir . $new_filename;
     
     if (move_uploaded_file($file['tmp_name'], $upload_path)) {
