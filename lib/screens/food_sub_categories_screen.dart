@@ -10,7 +10,6 @@ class FoodSubCategoriesScreen extends StatefulWidget {
 }
 
 class _FoodSubCategoriesScreenState extends State<FoodSubCategoriesScreen> {
-  int _selectedLanguageIndex = 0;
   final TextEditingController _subCategoryNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   List<Map<String, dynamic>> _subCategories = [];
@@ -365,16 +364,6 @@ class _FoodSubCategoriesScreenState extends State<FoodSubCategoriesScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Language Tabs
-                  Row(
-                    children: [
-                      _buildLanguageTab('Default', 0),
-                      _buildLanguageTab('English(EN)', 1),
-                      _buildLanguageTab('Arabic - عربية(AR)', 2),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
                   // Form Fields
                   Row(
                     children: [
@@ -386,7 +375,7 @@ class _FoodSubCategoriesScreenState extends State<FoodSubCategoriesScreen> {
                           children: [
                             RichText(
                               text: const TextSpan(
-                                text: 'Name (Default) ',
+                                text: 'Name ',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -680,33 +669,6 @@ class _FoodSubCategoriesScreenState extends State<FoodSubCategoriesScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLanguageTab(String title, int index) {
-    final isSelected = _selectedLanguageIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedLanguageIndex = index;
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.orange[600] : Colors.grey[200],
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey[700],
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            fontSize: 14,
-          ),
         ),
       ),
     );

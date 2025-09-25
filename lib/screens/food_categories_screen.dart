@@ -38,7 +38,8 @@ class _FoodCategoriesScreenState extends State<FoodCategoriesScreen> {
   Future<void> _pickImage() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         allowMultiple: false,
       );
 
@@ -250,16 +251,6 @@ class _FoodCategoriesScreenState extends State<FoodCategoriesScreen> {
           
           const SizedBox(height: 24),
           
-          // Language tabs
-          Row(
-            children: [
-              _buildLanguageTab('Default', true),
-              _buildLanguageTab('English(EN)', false),
-              _buildLanguageTab('Arabic - العربية(AR)', false),
-            ],
-          ),
-          const SizedBox(height: 32),
-          
           // Form section
           Expanded(
             child: Row(
@@ -273,7 +264,7 @@ class _FoodCategoriesScreenState extends State<FoodCategoriesScreen> {
                     children: [
                       // Name field
                       const Text(
-                        'Name (Default) *',
+                        'Name *',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -479,6 +470,14 @@ class _FoodCategoriesScreenState extends State<FoodCategoriesScreen> {
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.red[600],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Supports: JPG, PNG, GIF, WebP (Max 5MB)',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[500],
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -807,28 +806,6 @@ class _FoodCategoriesScreenState extends State<FoodCategoriesScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLanguageTab(String title, bool isActive) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isActive ? Colors.orange[600] : Colors.transparent,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: isActive ? Colors.orange[600]! : Colors.grey[300]!,
-        ),
-      ),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: isActive ? Colors.white : Colors.black87,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
       ),
     );
   }

@@ -34,7 +34,8 @@ class _GroceryCategoryEditScreenState extends State<GroceryCategoryEditScreen> {
   Future<void> _pickImage() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         allowMultiple: false,
       );
 
@@ -406,6 +407,14 @@ class _GroceryCategoryEditScreenState extends State<GroceryCategoryEditScreen> {
         Text(
           'Optional',
           style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Supports: JPG, PNG, GIF, WebP (Max 5MB)',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[500],
+          ),
         ),
         const SizedBox(height: 8),
         Container(
